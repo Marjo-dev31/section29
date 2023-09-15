@@ -23,7 +23,26 @@ router.post('/signup', async function (req, res) {
   const enteredConfirmEmail = userData['confirm-email'];
   const enteredPassword = userData.password;
 
-  const hashedPassword = await bcrypt.hash(enteredPassword, 12);
+  if (
+    !enteredEmail ||
+    !enteredConfirmEmail ||
+    !enteredPassword ||
+    enteredPassword.trim() < 6 || /*trim efface les blancs*/
+    enteredEmail !== enteredConfirmEmail ||
+    !enteredEmail.includes('@')
+  ) {
+    console.log('Incorrect data');
+    return res.redirect('/signup');
+  };
+
+  const existingUser = await db.getDb().collection('users').findOne({ email: enteredEmail });
+
+  if (existingUser) {
+    console.log('User already exist!');
+    return res.redirect('/signup');
+  }
+
+  const hashedPassword = await bcrypt.hash(enteredPassword, 12); /*crypte en 12 caractères*/
 
   const user = {
     email: enteredEmail,
@@ -49,7 +68,7 @@ router.post('/login', async function (req, res) {
   const passwordsAreEgal = await bcrypt.compare(enteredPassword, existingUser.password);
 
   if (!passwordsAreEgal) {
-    console.log('Could not log on - passwords are not egal!')
+    console.log('Could not log on - passwords are not egal!');
     return res.redirect('/login');
   }
 
