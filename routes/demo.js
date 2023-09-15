@@ -18,29 +18,50 @@ router.get('/login', function (req, res) {
 });
 
 router.post('/signup', async function (req, res) {
-const userData = req.body;
-const enteredEmail = userData.email;
-const enteredConfirmEmail = userData['confirm-email'];
-const enteredPassword = userData.password;
+  const userData = req.body;
+  const enteredEmail = userData.email;
+  const enteredConfirmEmail = userData['confirm-email'];
+  const enteredPassword = userData.password;
 
-const hashedPassword = await bcrypt.hash(enteredPassword, 12);
+  const hashedPassword = await bcrypt.hash(enteredPassword, 12);
 
-const user = {
-  email: enteredEmail,
-  password: hashedPassword,
-};
+  const user = {
+    email: enteredEmail,
+    password: hashedPassword,
+  };
 
-await db.getDb().collection('users').insertOne(user);
-
-res.redirect('/login');
+  await db.getDb().collection('users').insertOne(user);
+  res.redirect('/login');
 });
 
-router.post('/login', async function (req, res) {});
+router.post('/login', async function (req, res) {
+  const userData = req.body;
+  const enteredEmail = userData.email;
+  const enteredPassword = userData.password;
+
+  const existingUser = await db.getDb().collection('users').findOne({ email: enteredEmail });
+
+  if (!existingUser) {
+    console.log('Could not log in!');
+    return res.redirect('/login');
+  }
+
+  const passwordsAreEgal = await bcrypt.compare(enteredPassword, existingUser.password);
+
+  if (!passwordsAreEgal) {
+    console.log('Could not log on - passwords are not egal!')
+    return res.redirect('/login');
+  }
+
+  console.log('User is authenticated!');
+  res.redirect('/admin');
+
+});
 
 router.get('/admin', function (req, res) {
   res.render('admin');
 });
 
-router.post('/logout', function (req, res) {});
+router.post('/logout', function (req, res) { });
 
 module.exports = router;
