@@ -20,7 +20,7 @@ router.get('/login', function (req, res) {
 router.post('/signup', async function (req, res) {
   const userData = req.body;
   const enteredEmail = userData.email;
-  const enteredConfirmEmail = userData['confirm-email'];
+  const enteredConfirmEmail = userData['confirm-email']; /*id car n'est pas dans la bdd*/
   const enteredPassword = userData.password;
 
   if (
@@ -65,19 +65,25 @@ router.post('/login', async function (req, res) {
     return res.redirect('/login');
   }
 
-  const passwordsAreEgal = await bcrypt.compare(enteredPassword, existingUser.password);
+  const passwordsAreEgal = await bcrypt.compare(enteredPassword, existingUser.password); /*compar en decryptant*/
+
 
   if (!passwordsAreEgal) {
     console.log('Could not log on - passwords are not egal!');
     return res.redirect('/login');
   }
 
-  console.log('User is authenticated!');
-  res.redirect('/admin');
-
+  req.session.user = { id: existingUser._id, email: existingUser.email }; /* creer les datas a stocker, express-session va les stocker automatiquement dans la db/collection*/
+  req.session.isAuthenticated = true;
+  req.session.save(function () { /*function cb qui permet d attendre que les data soient stocker avant de redirect*/
+    res.redirect('/admin');
+  });
 });
 
 router.get('/admin', function (req, res) {
+  if (!req.session.isAuthenticated) /* = if isA is faulse*/ {
+    return res.status(401).render('401');
+  }
   res.render('admin');
 });
 
