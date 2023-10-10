@@ -40,7 +40,7 @@ router.post('/signup', async function (req, res) {
     !enteredEmail ||
     !enteredConfirmEmail ||
     !enteredPassword ||
-    enteredPassword.trim() < 6 || /*trim efface les blancs*/
+    enteredPassword.trim().length < 6 || /*trim efface les blancs*/
     enteredEmail !== enteredConfirmEmail ||
     !enteredEmail.includes('@')
   ) {
@@ -57,10 +57,14 @@ router.post('/signup', async function (req, res) {
     req.session.save(function () {
       res.redirect('/signup');
     });
+
     return;
   };
 
+  console.log('je ne passe pas ici')
   const existingUser = await db.getDb().collection('users').findOne({ email: enteredEmail });
+
+  console.log(existingUser)
 
   if (existingUser) {
     console.log('User already exist!');
