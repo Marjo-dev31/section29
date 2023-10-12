@@ -61,7 +61,6 @@ router.post('/signup', async function (req, res) {
     return;
   };
 
-  console.log('je ne passe pas ici')
   const existingUser = await db.getDb().collection('users').findOne({ email: enteredEmail });
 
   console.log(existingUser)
@@ -105,15 +104,28 @@ router.post('/login', async function (req, res) {
   req.session.user = { id: existingUser._id, email: existingUser.email }; /* creer les datas a stocker, express-session va les stocker automatiquement dans la db/collection*/
   req.session.isAuthenticated = true;
   req.session.save(function () { /*function cb qui permet d attendre que les data soient stocker avant de redirect*/
-    res.redirect('/admin');
+    res.redirect('/profile');
   });
 });
 
-router.get('/admin', function (req, res) {
+router.get('/admin', async function (req, res) {
+  if (!req.session.isAuthenticated) /* = if isA is faulse*/ {
+    return res.status(401).render('401');
+  };
+
+  const user =  await db.getDb().collection('users').findOne({_id: req.session.user.id});
+  if ( !user || !user.isAdmin) {
+   return res.status(403).render('403');
+  };
+
+  res.render('admin');
+});
+
+router.get('/profile', function (req, res) {
   if (!req.session.isAuthenticated) /* = if isA is faulse*/ {
     return res.status(401).render('401');
   }
-  res.render('admin');
+  res.render('profile');
 });
 
 router.post('/logout', function (req, res) {
